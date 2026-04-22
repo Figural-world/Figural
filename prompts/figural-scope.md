@@ -10,7 +10,8 @@ Rules:
 - After the developer answers, write ONE scope decision to the log by calling `figural_log_decision`.
 - Put all explicit “not in V1” items into the decision text so they are searchable.
 
-First, call `figural_get_spec` and read the current `.specpack.json`.
+First, call `figural_get_spec` and read the current `.specpack.json`.  
+If the file came from the **Figural web app**, scope lists are named `scope_in` / `scope_out`; local init uses `in_scope` / `out_of_scope` (same meaning).
 
 Then ask exactly these five questions (in order):
 1) What is the core user action this product enables?
