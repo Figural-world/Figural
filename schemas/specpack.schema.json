@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://figural.world/schemas/specpack.schema.json",
+  "title": "Figural SpecPack (union)",
+  "description": "A Figural spec pack is either the local CLI template (schema_version + in_scope) or the webapp-rich format (scope_in + tests). Validate against one sub-schema.",
+  "oneOf": [
+    { "$ref": "specpack.local.v1.schema.json" },
+    { "$ref": "specpack.webapp.v1.schema.json" }
+  ]
+}

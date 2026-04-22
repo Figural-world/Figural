@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://figural.world/schemas/specpack.local.v1.schema.json",
+  "title": "Figural local SpecPack (v1)",
+  "description": "Shape created by `npx figural-core init` as `.specpack.json` in a repo. Uses in_scope / out_of_scope naming aligned with the Week 1 brief.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Format version for this file (e.g. \"1.0\")."
+    },
+    "product_name": {
+      "type": "string",
+      "description": "Product or project name."
+    },
+    "decision": {
+      "type": "string",
+      "description": "Core product decision this spec represents."
+    },
+    "rationale": {
+      "type": "string",
+      "description": "Why this decision is the right trade-off."
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Confidence in this spec (0–1)."
+    },
+    "in_scope": {
+      "type": "array",
+      "description": "Explicitly in scope for this iteration.",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "out_of_scope": {
+      "type": "array",
+      "description": "Explicitly out of scope or forbidden.",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "constraints": {
+      "type": "array",
+      "description": "Non-negotiable constraints (security, infra, compliance, etc.).",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "edge_cases": {
+      "type": "array",
+      "description": "Edge cases to handle or defer (plain strings).",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "acceptance_tests": {
+      "type": "array",
+      "description": "Checkable acceptance criteria (strings).",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "description": "Links or references supporting the spec.",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "required": [
+    "schema_version",
+    "product_name",
+    "decision",
+    "rationale",
+    "confidence",
+    "in_scope",
+    "out_of_scope",
+    "constraints",
+    "edge_cases",
+    "acceptance_tests",
+    "evidence_refs"
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://figural.world/schemas/specpack.webapp.v1.schema.json",
+  "title": "Figural webapp SpecPack (v1)",
+  "description": "Shape produced by the Figural web app when generating a spec pack. Use this when syncing from the cloud or hand-authoring a rich spec pack.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "decision": {
+      "type": "string",
+      "description": "Single core decision this spec pack enforces—what you are building and the main trade-off."
+    },
+    "rationale": {
+      "type": "string",
+      "description": "Why this decision is the right trade-off for this team, timeline, and constraints."
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Confidence in this spec (0–1)."
+    },
+    "scope_in": {
+      "type": "array",
+      "description": "Explicitly in scope—capabilities and outcomes that count as done.",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "scope_out": {
+      "type": "array",
+      "description": "Explicitly out of scope or forbidden—say no to scope creep here.",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "tests": {
+      "type": "array",
+      "description": "Acceptance-style scenarios (given / when / then).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["given", "when", "then"],
+        "properties": {
+          "given": { "type": "string", "description": "Initial context or precondition." },
+          "when": { "type": "string", "description": "Action or trigger." },
+          "then": { "type": "string", "description": "Expected observable outcome." }
+        }
+      }
+    },
+    "success": {
+      "type": "array",
+      "description": "Measurable success criteria with targets and timeframes.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["metric", "target", "timeframe"],
+        "properties": {
+          "metric": { "type": "string", "description": "What you measure." },
+          "target": { "type": "string", "description": "Target value or qualitative goal." },
+          "timeframe": { "type": "string", "description": "When you expect to hit the target." }
+        }
+      }
+    },
+    "edge_cases": {
+      "type": "array",
+      "description": "Known tricky scenarios and how you handle them.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["scenario", "priority", "handling"],
+        "properties": {
+          "scenario": { "type": "string", "description": "What can go wrong or edge condition." },
+          "priority": {
+            "type": "string",
+            "enum": ["high", "medium", "low"],
+            "description": "Relative importance."
+          },
+          "handling": { "type": "string", "description": "Expected behavior or mitigation." }
+        }
+      }
+    },
+    "agent_brief": {
+      "type": "string",
+      "description": "Short brief for coding agents: what to do, what not to do, stack hints, files to touch."
+    },
+    "evidence_refs": {
+      "type": "array",
+      "description": "Supporting evidence (quotes, analytics, tickets).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["quote", "source"],
+        "properties": {
+          "quote": { "type": "string", "description": "Evidence text." },
+          "source": { "type": "string", "description": "Origin label (e.g. User interviews, Analytics)." },
+          "weight": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Optional strength or relevance (0–1)."
+          }
+        }
+      }
+    },
+    "quality_report": {
+      "type": "object",
+      "description": "Optional quality gate output from tooling.",
+      "additionalProperties": false,
+      "properties": {
+        "score": { "type": "number" },
+        "findings": {
+          "type": "array",
+          "items": { "type": "object" }
+        }
+      }
+    },
+    "security_abuse": {
+      "type": "object",
+      "description": "Optional security / abuse considerations.",
+      "additionalProperties": false,
+      "required": ["summary", "risks"],
+      "properties": {
+        "summary": { "type": "string" },
+        "risks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["concern", "category", "mitigation"],
+            "properties": {
+              "concern": { "type": "string" },
+              "category": { "type": "string" },
+              "mitigation": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "decision",
+    "rationale",
+    "confidence",
+    "scope_in",
+    "scope_out",
+    "tests",
+    "success",
+    "edge_cases",
+    "agent_brief",
+    "evidence_refs"
+  ]
+}
