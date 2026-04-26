@@ -1,87 +1,133 @@
-Figural is the PM for your AI agents.
+## figural-core
 
-AI agents forget what you decided. Figural gives them a persistent decision log that survives context windows, catches drift, and keeps every agent on the same page.
+AI agents forget what you decided yesterday.
 
-## Using `figural-core` (npm package)
+They rebuild things you already rejected. They contradict each other across sessions. They start blind every time. There's nowhere for product intent to live in an agentic codebase — so it evaporates from the context window, silently, every single session.
 
-**You use Figural through the npm package named `figural-core`.** You do not need to clone this repo to adopt it—only if you want to contribute or fork.
+Figural fixes that. A persistent decision log and structured spec that your agents read before they act and write back to after they decide.
 
-| What you want | Exact command |
-| --- | --- |
-| Bootstrap a repo (creates `.figural/` and `.specpack.json`) | `npx figural-core init` |
-| Optional: watch the repo for drift locally | `npx figural-core watch` |
-| MCP server (usually you do **not** run this by hand; Cursor/Claude spawn it) | `npx figural-core mcp` |
+## What it looks like
 
-**Why `figural-core` and not `figural`?** This package is published on npm as **`figural-core`**. The executable name is **`figural`**, but **`npx`** resolves it from the package name, so the command line is always **`npx figural-core …`**. Any doc that says `npx figural init` refers to a different/wrapper package name—here the correct install line is **`npx figural-core init`**.
+After one `npx figural-core init` and one `/figural-scope`, your repo has this:
 
-**Optional global install** (so you can type `figural init` without `npx`):
-
-```bash
-npm install -g figural-core
-figural init
-```
-
-After `init`, paste the printed MCP config into Cursor or Claude Code so the agent can call `figural_get_spec` and `figural_log_decision`.
-
-## 60-second quickstart
-
-From your repo root:
-
-```bash
-npx figural-core init
-```
-
-Then:
-
-1. Paste the **3 lines** into `CLAUDE.md` (they tell the agent how to use Figural).
-2. Paste the **MCP config JSON** into Cursor or Claude Code settings (same command: `npx -y figural-core mcp`).
-3. In Claude Code, run `/figural-scope` (prompts live under `./prompts/`).
-
-That writes your first scope decision to `.figural/log.json`. Next session, agents read `.specpack.json` and `.figural/log.json` before coding.
-
-`npx figural-core init` also creates the two files above and prints the `CLAUDE.md` lines plus both MCP config blocks (you already used those in steps 1–2).
-
-### What the first decision looks like
-
-After you run `/figural-scope` once, your `.figural/log.json` will include a first entry like:
+### `.figural/log.json` — every product decision, logged and versioned
 
 ```json
 {
   "id": 1,
   "timestamp": "2026-04-22T00:00:00.000Z",
-  "decision": "V1 scope: ... (explicitly out of scope: ...)",
-  "rationale": "Constraints: ... Success: ... Reconsider if: ...",
-  "confidence": 0.7,
-  "domain": "scope",
+  "decision": "V1 scope: auth via magic link only. Explicitly out of scope: OAuth, SSO, password reset.",
+  "rationale": "Constraints: ship in 2 weeks. Success: user can sign in and reach dashboard. Reconsider if: >3 enterprise requests for SSO.",
+  "confidence": 0.85,
+  "domain": "auth",
   "source": "human",
   "conflicts_with": [],
   "evidence_refs": []
 }
 ```
 
-## Slash commands
+### `.specpack.json` — a typed, machine-readable spec your agents execute against
 
-This package ships prompt templates in `./prompts/`:
-
-- `/figural-scope`: ask five forcing questions and log a structured scope decision
-- `/figural-decide`: log an explicit product/architecture decision at a fork
-- `/figural-watch`: check recent work against the spec and warn on drift
-
-### `./prompts/figural-scope.md`
-
-Asks five forcing questions and logs a single structured scope decision (domain: `scope`).
-
-Example usage (in Claude Code):
-
-```text
-/figural-scope
+```json
+{
+  "schema_version": "1.0",
+  "product_name": "my-app",
+  "decision": "Magic link auth only for V1",
+  "rationale": "Ship in 2 weeks, no OAuth complexity",
+  "confidence": 0.85,
+  "in_scope": ["magic link sign-in", "session management", "dashboard access"],
+  "out_of_scope": ["OAuth", "SSO", "password reset", "social login"],
+  "constraints": ["no external auth providers", "must work offline-first"],
+  "acceptance_tests": ["user receives magic link within 10s", "session persists across refresh"]
+}
 ```
 
-### `./prompts/figural-decide.md`
+Your agent reads both before it writes a single line of code. It writes decisions back after every meaningful choice. The loop is closed.
 
-Captures a fork decision with tradeoffs, a forced choice, rationale, and confidence (domain is provided by the developer).
+## 60-second quickstart
 
-Example usage:
+```bash
+npx figural-core init
+```
+
+This creates `.figural/log.json`, `.specpack.json`, and prints your MCP config.
+
+Then:
+
+- Paste the printed lines into `CLAUDE.md` — tells your agent how to use Figural
+- Paste the MCP config JSON into Cursor or Claude Code settings
+- Run `/figural-scope` in Claude Code — answers five forcing questions, logs your first scope decision
+
+Next session, every agent reads `.specpack.json` and `.figural/log.json` before it acts. Context survives. Decisions persist.
+
+## Cursor setup (step-by-step)
+
+The most common Cursor setup issue is **working directory**: the MCP server must run with `cwd` set to the repo that contains your `.specpack.json`. If it doesn’t, `figural_get_spec` will read a different file (often the blank template).
+
+### 1) Open the correct folder
+
+Open Cursor with your **project root folder** (the folder that contains `.specpack.json`).
+
+### 2) Add a project-level MCP config (recommended)
+
+Create a file at `.cursor/mcp.json` (inside your project root) with:
+
+```json
+{
+  "mcpServers": {
+    "figural": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "figural-core", "mcp"],
+      "cwd": "${workspaceFolder}"
+    }
+  }
+}
+```
+
+Notes:
+- `type: "stdio"` matters (Cursor uses it to treat this as a local process server).
+- `cwd: "${workspaceFolder}"` ensures the server reads **this repo’s** `.specpack.json`.
+
+### 3) Restart Cursor and verify tools
+
+Fully restart Cursor, then run:
+- `figural_get_spec` → should return your current `.specpack.json`
+- `figural_log_decision` → should return a numeric id and append to `.figural/log.json`
+
+### Troubleshooting: `figural_get_spec` returns a blank/default spec
+
+If you see a default object like `{"schema_version":"1.0","decision":"","in_scope":[]...}`:
+- You are almost always pointing the MCP server at the wrong folder.
+- Fix by using project-level `.cursor/mcp.json` and ensuring `cwd` is `${workspaceFolder}`.
+- Avoid copying `.specpack.json` into parent folders; duplicates cause silent confusion.
+
+Optional global install:
+
+```bash
+npm install -g figural-core
+figural init
+```
+
+## MCP tools
+
+Two tools, automatically available to any agent once configured:
+
+| Tool | What it does |
+| --- | --- |
+| `figural_get_spec` | Agent reads the spec before acting |
+| `figural_log_decision` | Agent writes decisions back after acting |
+
+No setup beyond pasting the MCP config. Works with Cursor, Claude Code, and any MCP-compatible agent.
+
+## Slash commands
+
+Prompt templates that ship in `./prompts/`:
+
+- `/figural-scope`: Asks five forcing questions. Logs a structured scope decision to `.figural/log.json`. Run this at the start of any new feature or session.
+- `/figural-decide`: Captures a fork decision with tradeoffs, a forced choice, rationale, and confidence. Run this whenever you hit a meaningful architectural or product decision.
+
+Example:
 
 ```text
 /figural-decide
@@ -91,73 +137,100 @@ Options: Postgres, SQLite
 Constraints: must run locally, easy backups
 ```
 
-### `./prompts/figural-watch.md`
-
-Checks recent work against `out_of_scope`, `constraints`, and the core product decision. If drift is meaningful, it logs a drift event (domain: `drift`) with severity + recommended action.
-
-Example usage:
-
-```text
-/figural-watch
-```
-
-## Passive drift watcher (optional)
-
-You can also run a local watcher:
-
-```bash
-npx figural-core watch
-```
-
-If it can’t start on your system, use the manual `/figural-watch` prompt after significant work.
-
-## Schemas
+## Schema reference
 
 ### `.figural/log.json`
 
-- `schema_version` (string): currently `"1.0"`
-- `decisions` (array): list of decision entries
-
-Each decision entry:
-
-- `id` (number): auto-incrementing integer
-- `timestamp` (string): ISO-8601
-- `decision` (string)
-- `rationale` (string)
-- `confidence` (number): 0..1
-- `domain` (string): e.g. `"auth"`, `"data model"`, `"UX"`, `"infrastructure"`
-- `source` (string): `"human"` | `"agent"` | `"extension"`
-- `conflicts_with` (number[]): decision ids this entry contradicts
-- `evidence_refs` (string[]): links or references
+| Field | Type | Description |
+| --- | --- | --- |
+| `id` | number | Auto-incrementing |
+| `timestamp` | string | ISO-8601 |
+| `decision` | string | What was decided |
+| `rationale` | string | Why, constraints, success criteria |
+| `confidence` | number | 0–1 |
+| `domain` | string | e.g. `"auth"`, `"data model"`, `"UX"` |
+| `source` | string | `"human"` \| `"agent"` \| `"extension"` |
+| `conflicts_with` | number[] | IDs of contradicted decisions |
+| `evidence_refs` | string[] | Links or references |
 
 ### `.specpack.json`
 
-Fields:
+| Field | Type | Description |
+| --- | --- | --- |
+| `schema_version` | string | Currently `"1.0"` |
+| `product_name` | string |  |
+| `decision` | string | The core product decision |
+| `rationale` | string |  |
+| `confidence` | number | 0–1 |
+| `in_scope` | string[] | Explicitly in scope |
+| `out_of_scope` | string[] | Explicitly rejected |
+| `constraints` | string[] | Hard constraints |
+| `acceptance_tests` | string[] | How you know it's done |
+| `evidence_refs` | string[] | Supporting evidence |
 
-- `schema_version` (string): e.g. `"1.0"`
-- `product_name` (string)
-- `decision` (string)
-- `rationale` (string)
-- `confidence` (number)
-- `in_scope` (string[])
-- `out_of_scope` (string[])
-- `constraints` (string[])
-- `edge_cases` (string[])
-- `acceptance_tests` (string[])
-- `evidence_refs` (string[])
+JSON schemas for editor validation: `schemas/specpack.local.v1.schema.json`
 
-**JSON Schema (for editors and validation):**
+## Using with the Figural web app
 
-| File | Use when |
-| --- | --- |
-| [schemas/specpack.local.v1.schema.json](schemas/specpack.local.v1.schema.json) | You use `npx figural-core init` and edit `.specpack.json` locally (`in_scope`, `out_of_scope`, …). |
-| [schemas/specpack.webapp.v1.schema.json](schemas/specpack.webapp.v1.schema.json) | Your spec comes from the **Figural web app** export (`scope_in`, `scope_out`, structured `tests`, `success`, …). |
+If you export a spec from `figural.app`, drop the exported JSON directly into `.specpack.json`. The MCP tools normalise web app fields (`scope_in` / `scope_out`) to match the local schema automatically.
 
-The webapp format matches the richer shape (given/when/then tests, success metrics, structured edge cases and evidence). Local format uses simpler string arrays for the same ideas.
+## Why open source
 
-**Pasting a spec from the Figural web app:** You can replace `.specpack.json` with a JSON export from the Figural web app as-is. `figural_get_spec` returns that file verbatim to your agent. **`figural watch`** and other tooling normalize webapp fields internally (`scope_in` / `scope_out` map to the same roles as `in_scope` / `out_of_scope`). Your agent should treat `scope_out` and `out_of_scope` as the same concept when reading raw JSON via MCP.
+The `.specpack.json` format only works as a standard if it belongs to no one.
+
+Every vendor-built spec tool — AWS Kiro, GitHub Spec Kit, Cursor Plan Mode — locks your intent to their platform. Switch agents and your context disappears. We think that's wrong. Intent should travel with the team, not the tool.
+
+`figural-core` is MIT licenced. The schema is open and versioned. We want `.specpack.json` in every repo that ships with AI agents — the way `.gitignore` is in every repo that ships with git.
+
+The web app (`figural.app`) is where teams share the log, detect drift across sessions, and ingest evidence from Notion and Slack. The open source core is where the format lives. Forever.
+
+## Note on package naming
+
+This package is published on npm as `figural-core`. The executable is `figural`, but `npx` resolves from the package name — so always use `npx figural-core init`, not `npx figural init`.
 
 ## Contributing
 
-- **Slack**: add your team Slack/Discord link here.
+Issues and PRs welcome. If you're adopting `.specpack.json` in your repo or building tooling around it, open an issue and tell us what the format needs to handle.
+
+### Local development
+
+```bash
+npm install
+npm run build
+```
+
+Typecheck:
+
+```bash
+npm run lint
+```
+
+Run the CLI locally:
+
+```bash
+node dist/cli/index.js init
+node dist/cli/index.js mcp
+node dist/cli/index.js watch
+```
+
+### Making a PR
+
+1) Fork the repo and create a branch.\n
+2) Keep changes small and scoped (one behavior change per PR).\n
+3) Run `npm run build` before pushing.\n
+4) Open a PR with:\n
+- what you changed\n
+- why you changed it\n
+- how to test it (exact commands)\n
+
+### High-impact contribution areas
+
+- Cursor/Claude MCP config ergonomics (making setup foolproof)\n
+- SpecPack schema compatibility (webapp ⇄ local) and migration helpers\n
+- Drift detection heuristics (deterministic and low-noise)\n
+- Docs + examples (real repos, real spec packs)\n
+
+Built by Neeha and Shaurya at figural.world.
+
+MIT licence.
 

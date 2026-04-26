@@ -23,8 +23,10 @@ export async function runInit(opts: { cwd: string }): Promise<void> {
   const cursorMcpConfig = {
     mcpServers: {
       figural: {
+        type: "stdio",
         command: "npx",
-        args: ["-y", "figural-core", "mcp"]
+        args: ["-y", "figural-core", "mcp"],
+        cwd: "${workspaceFolder}"
       }
     }
   };
@@ -32,6 +34,7 @@ export async function runInit(opts: { cwd: string }): Promise<void> {
   const claudeCodeMcpConfig = {
     mcpServers: {
       figural: {
+        type: "stdio",
         command: "npx",
         args: ["-y", "figural-core", "mcp"]
       }
@@ -48,11 +51,16 @@ export async function runInit(opts: { cwd: string }): Promise<void> {
       "Paste these lines into CLAUDE.md:",
       ...claudeLines.map((l) => `- ${l}`),
       "",
-      "Cursor MCP config JSON:",
+      "Cursor MCP config JSON (recommended: project-level .cursor/mcp.json):",
       JSON.stringify(cursorMcpConfig, null, 2),
       "",
       "Claude Code MCP config JSON:",
       JSON.stringify(claudeCodeMcpConfig, null, 2),
+      "",
+      "If Cursor reads a blank/default spec, it's almost always a cwd mismatch.",
+      "Fix by ensuring the MCP server config includes:",
+      '- type: "stdio"',
+      '- cwd: "${workspaceFolder}" (or set cwd to your repo root path)',
       ""
     ].join("\n")
   );

@@ -1,6 +1,6 @@
 {
   "name": "figural-core",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "description": "Figural is the PM for your AI agents.",
   "license": "MIT",
   "type": "module",
