@@ -215,20 +215,20 @@ node dist/cli/index.js watch
 
 ### Making a PR
 
-1) Fork the repo and create a branch.\n
-2) Keep changes small and scoped (one behavior change per PR).\n
-3) Run `npm run build` before pushing.\n
-4) Open a PR with:\n
-- what you changed\n
-- why you changed it\n
-- how to test it (exact commands)\n
+1) Fork the repo and create a branch.
+2) Keep changes small and scoped (one behavior change per PR).
+3) Run `npm run build` before pushing.
+4) Open a PR with:
+- what you changed
+- why you changed it
+- how to test it (exact commands)
 
 ### High-impact contribution areas
 
-- Cursor/Claude MCP config ergonomics (making setup foolproof)\n
-- SpecPack schema compatibility (webapp ⇄ local) and migration helpers\n
-- Drift detection heuristics (deterministic and low-noise)\n
-- Docs + examples (real repos, real spec packs)\n
+- Cursor/Claude MCP config ergonomics (making setup foolproof)
+- SpecPack schema compatibility (webapp ⇄ local) and migration helpers
+- Drift detection heuristics (deterministic and low-noise)
+- Docs + examples (real repos, real spec packs)
 
 Built by Neeha and Shaurya at figural.world.
 
